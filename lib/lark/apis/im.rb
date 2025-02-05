@@ -8,8 +8,43 @@ module Lark
       #   receive_id: 消息接收者
       #   content：消息内容
       #   msg_type：消息类型
+      # API doc: https://open.feishu.cn/document/server-docs/im-v1/message/create
+      # 内容文档: https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
       def send_message(payload, receive_id_type: :open_id)
         post 'im/v1/messages', payload, params: { receive_id_type: receive_id_type }.compact
+      end
+
+      # Sends a markdown message to a specified receiver.
+      #
+      # @param title [String] The title of the message.
+      # @param markdown [String] The markdown content.
+      # @param receive_id [String] The ID of the message receiver.
+      # @param receive_id_type [Symbol] The type of receiver ID. Optional values: :open_id, :user_id, :union_id, :email, :chat_id. Default is :open_id.
+      #
+      # API doc: https://open.feishu.cn/document/server-docs/im-v1/message/create
+      # 内容文档: https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
+      #
+      # @return [HTTP::Response] The response from the API call.
+      def send_markdown_message(title: '', markdown:, receive_id:, receive_id_type: :open_id)
+        content = {
+          zh_cn: {
+            title: title,
+            content: [
+              [
+                {
+                  tag: 'md',
+                  text: markdown
+                }
+              ]
+            ]
+          }
+        }
+        send_message({
+          receive_id: receive_id,
+          content: content.to_json,
+          msg_type: 'post'
+        },
+        receive_id_type: receive_id_type)
       end
 
       def upload_image(image, image_type)
