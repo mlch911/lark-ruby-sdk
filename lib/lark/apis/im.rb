@@ -1,6 +1,48 @@
 module Lark
   module Apis
     module Im
+      # 获取用户或机器人所在的群列表
+      # @param sort_type [String] 排序方式。可选值：
+      #   - ByCreateTimeAsc: 按创建时间升序（默认值）
+      #   - ByActiveTimeDesc: 按活跃时间降序排列。因群组活跃时间变动频繁，使用 ByActiveTimeDesc 排序方式可能会造成群组遗漏或重复。因为每次分页时，会重新计算活跃时间。
+      # @param page_size [Integer] 分页大小，默认20，最大值为100
+      # @param page_token [String] 分页标记，第一次请求不填，表示从头开始遍历；分页查询结果还有更多项时会同时返回新的 page_token，下次遍历可采用该 page_token 获取查询结果
+      # API doc: https://open.feishu.cn/document/server-docs/group/chat/list?appId=cli_a3a81c34a03dd013
+      def list(sort_type: 'ByCreateTimeAsc', page_size: nil, page_token: nil)
+        get('im/v1/chats', params: {
+          sort_type: sort_type,
+          page_size: page_size,
+          page_token: page_token
+        }.compact)
+      end
+
+      # 获取用户或机器人所在的所有群列表（自动处理分页）
+      # @param sort_type [String] 排序方式。可选值：
+      #   - ByCreateTimeAsc: 按创建时间升序（默认值）
+      #   - ByActiveTimeDesc: 按活跃时间降序排列。因群组活跃时间变动频繁，使用 ByActiveTimeDesc 排序方式可能会造成群组遗漏或重复。
+      # @param page_size [Integer] 每次请求的分页大小，默认100，最大值为100
+      # @return [Array] 所有群组数据的数组
+      def list_all(sort_type: 'ByCreateTimeAsc', page_size: 100)
+        results = []
+        page_token = nil
+
+        loop do
+          response = list(sort_type: sort_type, page_size: page_size, page_token: page_token)
+          data = JSON.parse(response.body)
+
+          # 添加当前页的数据
+          results.concat(data['data']['items']) if data['data'] && data['data']['items']
+
+          # 获取下一页的 token
+          page_token = data['data']['page_token']
+
+          # 如果没有更多数据，退出循环
+          break unless data['data']['has_more'] == true
+        end
+
+        results
+      end
+
       # receive_id_type:
       #   可选值：open_id、user_id、union_id、email、chat_id
       #   默认值：open_id
