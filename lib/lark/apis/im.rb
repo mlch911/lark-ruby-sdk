@@ -17,7 +17,10 @@ module Lark
       # Sends a markdown message to a specified receiver.
       #
       # @param title [String] The title of the message.
-      # @param markdown [String] The markdown content.
+      # @param [String] markdown  markdown内容。注意只支持部分 markdown 语法。
+      #                           若需要使用图片，markdown 中的图片链接必须为通过「上传图片」接口上传的图片的 image_key，直接使用图片链接无法发送
+      #                           详见https://open.feishu.cn/document/ukTMukTMukTM/uADOwUjLwgDM14CM4ATN。
+      # @param [Hash] btnDic      配置按钮。key 为按钮文字，value 为按钮点击跳转的链接。
       # @param receive_id [String] The ID of the message receiver.
       # @param receive_id_type [Symbol] The type of receiver ID. Optional values: :open_id, :user_id, :union_id, :email, :chat_id. Default is :open_id.
       #
@@ -25,26 +28,62 @@ module Lark
       # 内容文档: https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
       #
       # @return [HTTP::Response] The response from the API call.
-      def send_markdown_message(title: '', markdown:, receive_id:, receive_id_type: :open_id)
-        content = {
-          zh_cn: {
-            title: title,
-            content: [
-              [
-                {
-                  tag: 'md',
-                  text: markdown
-                }
+      def send_markdown_message(title: '', markdown:, btnDic: {}, receive_id:, receive_id_type: :open_id)
+        if btnDic.empty?
+          content = {
+            zh_cn: {
+              title: title,
+              content: [
+                [
+                  {
+                    tag: 'md',
+                    text: markdown
+                  }
+                ]
               ]
-            ]
+            }
           }
-        }
-        send_message({
-          receive_id: receive_id,
-          content: content.to_json,
-          msg_type: 'post'
-        },
-        receive_id_type: receive_id_type)
+          send_message({
+            receive_id: receive_id,
+            content: content.to_json,
+            msg_type: 'post'
+          },
+          receive_id_type: receive_id_type)
+        else
+          body = {
+            receive_id: receive_id,
+            msg_type: 'interactive',
+            card: {
+              elements: [{
+                tag: 'markdown',
+                content: markdown
+              }],
+              header: {
+                title: {
+                  content: title,
+                  tag: 'plain_text'
+                }
+              }
+            }
+          }
+          unless btnDic.empty?
+            actions = []
+            btnDic.each_pair do |btn, url|
+              actions.push({ tag: 'button',
+                            text: {
+                              tag: 'plain_text',
+                              content: btn.to_s
+                            },
+                            type: 'primary',
+                            url: url })
+            end
+            body[:card][:elements].push({ tag: 'action',
+                                          actions: actions })
+          end
+          body[:content] = body[:card].to_json
+          body[:card] = nil
+          send_message(body, receive_id_type: receive_id_type)
+        end
       end
 
       def upload_image(image, image_type)
