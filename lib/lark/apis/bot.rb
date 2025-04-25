@@ -33,9 +33,9 @@ module Lark
           'msg_type': 'interactive',
           'card': {
             'elements': [{
-                           'tag': 'markdown',
-                           'content': markdown
-                         }],
+              'tag': 'div',
+              'text': {'content': markdown, 'tag': 'lark_md'},
+            }],
             'header': {
               'title': {
                 'content': title,
