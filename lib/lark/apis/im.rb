@@ -8,7 +8,7 @@ module Lark
       # @param page_size [Integer] 分页大小，默认20，最大值为100
       # @param page_token [String] 分页标记，第一次请求不填，表示从头开始遍历；分页查询结果还有更多项时会同时返回新的 page_token，下次遍历可采用该 page_token 获取查询结果
       # API doc: https://open.feishu.cn/document/server-docs/group/chat/list?appId=cli_a3a81c34a03dd013
-      def list(sort_type: 'ByCreateTimeAsc', page_size: nil, page_token: nil)
+      def list_groups(sort_type: 'ByCreateTimeAsc', page_size: nil, page_token: nil)
         get('im/v1/chats', params: {
           sort_type: sort_type,
           page_size: page_size,
@@ -22,7 +22,7 @@ module Lark
       #   - ByActiveTimeDesc: 按活跃时间降序排列。因群组活跃时间变动频繁，使用 ByActiveTimeDesc 排序方式可能会造成群组遗漏或重复。
       # @param page_size [Integer] 每次请求的分页大小，默认100，最大值为100
       # @return [Array] 所有群组数据的数组
-      def list_all(sort_type: 'ByCreateTimeAsc', page_size: 100)
+      def list_all_groups(sort_type: 'ByCreateTimeAsc', page_size: 100)
         results = []
         page_token = nil
 
@@ -40,6 +40,23 @@ module Lark
         end
 
         results
+      end
+
+      # 获取用户或机器人所在的群列表
+      # @param query [String] 搜索内容复。因为每次分页时，会重新计算活跃时间。
+      # @param page_size [Integer] 分页大小，默认20，最大值为100
+      # @param user_id_type 用户 ID 类型
+      #   可选值：open_id、user_id、union_id
+      #   默认值：open_id
+      # @return [Array] 群组
+      #
+      # API doc: https://open.feishu.cn/document/server-docs/group/chat/search?appId=cli_a3a81c34a03dd013
+      def search_groups(query, user_id_type: :open_id)
+        result = get('im/v1/chats/search', params: {
+          query: query,
+          user_id_type: user_id_type
+        })
+        result.data['data']['items']
       end
 
       # receive_id_type:
