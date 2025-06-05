@@ -114,7 +114,7 @@ module Lark
             card: {
               elements: [{
                 tag: 'div',
-                text: {content: message, tag: 'lark_md'},
+                text: {content: markdown, tag: 'lark_md'},
               }],
               header: {
                 title: {
