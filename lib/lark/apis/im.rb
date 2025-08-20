@@ -106,7 +106,7 @@ module Lark
             }
           }
         }
-        unless btn_dic.empty?
+        unless btn_dic.nil? || btn_dic.empty?
           actions = []
           btn_dic.each_pair do |btn, url|
             actions.push({ tag: 'button',
