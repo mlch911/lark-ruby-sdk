@@ -87,61 +87,40 @@ module Lark
       #
       # @return [HTTP::Response] The response from the API call.
       def send_markdown_message(title: '', markdown:, btn_dic: {}, receive_id:, receive_id_type: :open_id)
-        if btn_dic.empty?
-          content = {
-            zh_cn: {
-              title: title,
-              content: [
-                [
-                  {
-                    tag: 'md',
-                    text: markdown
-                  }
-                ]
-              ]
-            }
-          }
-          send_message({
-            receive_id: receive_id,
-            content: content.to_json,
-            msg_type: 'post'
-          },
-          receive_id_type: receive_id_type)
-        else
-          body = {
-            receive_id: receive_id,
-            msg_type: 'interactive',
-            card: {
+        body = {
+          receive_id: receive_id,
+          msg_type: 'interactive',
+          content: {
+            schema: '2.0',
+            body: {
               elements: [{
-                tag: 'div',
-                text: {content: markdown, tag: 'lark_md'},
-              }],
-              header: {
-                title: {
-                  content: title,
-                  tag: 'plain_text'
-                }
+                tag: 'markdown',
+                content: markdown
+              }]
+            },
+            header: {
+              title: {
+                content: title,
+                tag: 'plain_text'
               }
             }
           }
-          unless btn_dic.empty?
-            actions = []
-            btn_dic.each_pair do |btn, url|
-              actions.push({ tag: 'button',
-                            text: {
-                              tag: 'plain_text',
-                              content: btn.to_s
-                            },
-                            type: 'primary',
-                            url: url })
-            end
-            body[:card][:elements].push({ tag: 'action',
-                                          actions: actions })
+        }
+        unless btn_dic.empty?
+          actions = []
+          btn_dic.each_pair do |btn, url|
+            actions.push({ tag: 'button',
+                          text: {
+                            tag: 'plain_text',
+                            content: btn.to_s
+                          },
+                          type: 'primary',
+                          url: url })
           end
-          body[:content] = body[:card].to_json
-          body[:card] = nil
-          send_message(body, receive_id_type: receive_id_type)
+          body[:content][:body][:elements].push({ tag: 'action', actions: actions })
         end
+        body[:content] = body[:content].to_json
+        send_message(body, receive_id_type: receive_id_type)
       end
 
       def upload_image(image, image_type)
