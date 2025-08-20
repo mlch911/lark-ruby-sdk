@@ -154,6 +154,10 @@ module Lark
       def delete_chat(chat_id)
         delete "im/v1/chats/#{chat_id}"
       end
+
+      def upload_file(file, file_type = 'stream')
+        post_form 'im/v1/files', { file: HTTP::FormData::File.new(file), file_name: File.basename(file), file_type: file_type }
+      end
     end
   end
 end
